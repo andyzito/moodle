@@ -3345,8 +3345,8 @@ class assign {
         $this->require_view_grades();
 
         // Load all users with submit.
-        $students = get_enrolled_users($this->context, "mod/assign:submit", null, 'u.*', null, null, null,
-                        $this->show_only_active_users());
+        $students = get_enrolled_users($this->context, "mod/assign:submit", null, 'u.*', 'lastname',
+                    null, null, $this->show_only_active_users());
 
         // Build a list of files to zip.
         $filesforzipping = array();
@@ -3367,6 +3367,11 @@ class assign {
         $filename = clean_filename($this->get_course()->shortname . '-' .
                                    $this->get_instance()->name . '-' .
                                    $groupname.$this->get_course_module()->id . '.zip');
+
+        // Initialize sort key to be prepended to file/folder names.
+        $sortkey = 1;
+        $sortkeypad = strlen((string) count($students));
+        $sortinc = false; // If a student has no submissions, we don't increment the sort key.
 
         // Get all the files for each student.
         foreach ($students as $student) {
@@ -3397,7 +3402,8 @@ class assign {
                     $prefix = str_replace('_', ' ', $groupname . get_string('participant', 'assign'));
                     $prefix = clean_filename($prefix . '_' . $this->get_uniqueid_for_user($userid));
                 } else {
-                    $prefix = str_replace('_', ' ', $groupname . fullname($student));
+                    $keystring = str_pad($sortkey, '0', $sortkeypad, STR_PAD_LEFT);
+                    $prefix = str_replace('_', ' ', $keystring . $groupname . fullname($student));
                     $prefix = clean_filename($prefix . '_' . $this->get_uniqueid_for_user($userid));
                 }
 
@@ -3450,6 +3456,8 @@ class assign {
                             }
                         }
                     }
+                    // If there are files to export, increment our file sort key.
+                    $sortkey++;
                 }
             }
         }
